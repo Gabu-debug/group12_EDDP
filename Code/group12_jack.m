@@ -3,7 +3,7 @@ close all
 clc
 
 Tw = 30; % s - Lenght of each window, smaller => More averages, less freq res
-overlap = .66; % -% like in lab 4
+overlap = .5; % -% like in lab 4
 
 % I think we'll measure for a long time a random input response
 % Then we split the response in pieces of T lenght, apply windows and go in
@@ -12,8 +12,8 @@ overlap = .66; % -% like in lab 4
 
 % Don't know which of these
 Data = load('modal_extraction.mat');
-input = Data.input; % Vector of the overall measurement
-output = Data.output;
+input = Data.input(:); % Vector of the overall measurement
+output = Data.output(:);
 
 % [n,p]=uigetfile('.mat','choose the data file');
 % cd(p);
