@@ -2,8 +2,8 @@ clear
 close all
 clc
 
-Tw = 30; % s - Lenght of each window, smaller => More averages, less freq res
-overlap = .5; % -% like in lab 4
+Tw = 20; % s - Lenght of each window, smaller => More averages, less freq res
+overlap = .6; % -% like in lab 4
 
 % I think we'll measure for a long time a random input response
 % Then we split the response in pieces of T lenght, apply windows and go in
@@ -11,22 +11,31 @@ overlap = .5; % -% like in lab 4
 % Compute expected value of power and cross spectra and estimate the FRF
 
 % Don't know which of these
-Data = load('modal_extraction.mat');
-input = Data.input(:); % Vector of the overall measurement
-output = Data.output(:);
+Data = load('Lab_04_staircase_empty.mat');
+input = Data.Data(:,1); % Vector of the overall measurement
+output = Data.Data(:,2);
 
 % [n,p]=uigetfile('.mat','choose the data file');
 % cd(p);
 % load(n);
 
-fs = Data.fs;
+fs = Data.fsamp;
 dt = 1/fs;
 N = length(output); % Any vector which is the long measurement
-
 t_vec = 0:dt:(N-1)*dt; % Global time vector
 
+%t_vec = time.t;
+%dt = t_vec(end)/N;
+%fs = 1/dt;
+
 figure
+subplot(2,1,1)
+plot (t_vec, input)
+title('input time domain')
+grid on
+subplot(2,1,2)
 plot (t_vec, output) % This should plot the entire response in time
+title('output time domain')
 grid on
 
 N_samples = round(Tw/dt);             % Number of elements of each split
@@ -41,19 +50,23 @@ win = hanning(N_samples);
 coherence = abs(Gxy).^2./(Gxx.*Gyy);
 
 figure
-subplot(1,2,1)
+subplot(2,1,1)
 semilogy(freq_xx, Gxx)
+title('autcorriInput')
 grid on
 
-subplot(1,2,2)
+subplot(2,1,2)
 semilogy(freq_yy, Gyy)
+title('autcorrOutput')
 grid on
 
 figure
 subplot(2,1,1)
 semilogy(freq_xy, abs(Gxy))
+title('crosscorrAmp')
 grid on
 subplot(2,1,2)
+title('crosscorrPhase')
 plot(freq_xy, angle(Gxy))
 % Low range, not loglog, we can change it
 
@@ -64,26 +77,28 @@ H2 = Gyy./Gyx;
 
 figure
 subplot(2,2,1)
-loglog(freq_xx, abs(H1))
+semilogy(freq_xx, abs(H1))
+title('H1')
 grid on
 
 subplot(2,2,3)
 plot(freq_xx, angle(H1))
 grid on
-
 subplot(2,2,2)
-loglog(freq_xx, abs(H2))
+semilogy(freq_xx, abs(H2))
+title('H2')
 grid on
-
 subplot(2,2,4)
 plot(freq_xx, angle(H2))
-
+grid on
 figure
-loglog(freq_xx, abs(H1))
+semilogy(freq_xx, abs(H1))
 hold on
-loglog(freq_xx, abs(H2))
+semilogy(freq_xx, abs(H2))
 yyaxis("left")
-semilogx(freq_xx, coherence)
+plot(freq_xx, coherence)
+grid on
+legend('H1','H2','coherence')
 % From these plots we should be able to choose the correct estimator
 %% Modal extraction
 
@@ -98,10 +113,10 @@ G_num = @(omega,x) x(3) ./ (-omega.^2+ 1i*2*x(2)*omega*x(1) + x(1)^2) + x(4)./om
 G_exp = H2; 
 % or G_exp = H1 based on which one is the best esimatr
 
-[~, all_peaks] = findpeaks(abs(G_exp),'MinPeakProminence', 0.2);
+[~, all_peaks] = findpeaks(abs(imag(G_exp(101:300))),'MinPeakProminence', 0.01); %
 
-n_modes = 4; 
-res_locs = all_peaks(1:n_modes);
+n_modes = 2; 
+res_locs = all_peaks(1:n_modes) + 101;
 
 om_nat = freq_xx(res_locs) * 2*pi;
 dphase = diff(unwrap(angle(G_exp))) ./ diff(freq_xx*2*pi)';
@@ -134,8 +149,9 @@ for ii = 1:n_modes
     x(:,ii) = lsqnonlin(err,x0,[],[],[]);
 
 end
-
 %% graphical check
+
+figure
 for ii = 1 : n_modes
     %amplitudes
     %experim FRF 
@@ -160,8 +176,13 @@ for ii = 1 : n_modes
 end 
 
 
+%%
+figure
+plot(freq_xx(101:300), abs(imag(G_exp(101:300))))
+hold on
+grid on
 
-
+freq_xx(all_peaks)
 
 
 
